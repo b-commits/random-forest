@@ -1,9 +1,13 @@
 import pandas as pd
-import numpy as np
+
+# import numpy as np
 
 df = pd.read_csv('b_depressed.csv')
 df = df.drop('Survey_id', axis='columns')
 df = df.drop('Ville_id', axis='columns')
+# df = df[:4]             ## get only top 4 rows
+print(df.shape)
+
 
 
 # print(df.values[0])
@@ -77,6 +81,7 @@ def get_gini(rows):
     """
     count_zero = 0  # number of rows labelled healthy
     count_one = 0  # number of rows labelled depressed
+
     for row in rows:
         if row[len(row) - 1] == 0:
             count_zero = count_zero + 1
@@ -86,9 +91,9 @@ def get_gini(rows):
 
 
 # impurity of the whole dataset
-print(get_gini(df.values))
-# data sample with 0 impurity
-print(get_gini([[0, 0, 0], [0, 0, 0]]))
+# print(get_gini(df.values))
+# data sample-example with 0 impurity
+# print(get_gini([[0, 0, 0], [0, 0, 0]]))
 
 
 def get_info_gain(true_rows, false_rows, current_impurity):
@@ -96,13 +101,14 @@ def get_info_gain(true_rows, false_rows, current_impurity):
     Finds information gain for a partition produced by a question.
     :return: information gain (weighted average
     """
-    avg_impurity = len(true_rows) * get_gini(true_rows) + len(false_rows) * get_gini(false_rows)
+    avg_impurity = (len(true_rows)/(len(true_rows)+len(false_rows))) * get_gini(true_rows) + \
+                   (len(false_rows)/(len(true_rows)+len(false_rows))) * get_gini(false_rows)
     return current_impurity - avg_impurity
 
 
 def get_best_split(rows):
     """
-    Finds best question to ask.
+    Finds the best question to ask.
     :return: a Question object that produces maximum information gain and the value of that gain.
     """
     best_gain = 0
@@ -111,11 +117,23 @@ def get_best_split(rows):
     n_features = len(rows[0])
 
     for col in range(n_features):
+
         for row in rows:
             question = Question(col, row[col])
             true_rows, false_rows = partition(rows, question)
+
+            if len(true_rows) == 0 or len(false_rows) == 0:
+                break
+
             question_gain = get_info_gain(true_rows, false_rows, current_impurity)
+
             if question_gain >= best_gain:
                 best_gain = question_gain
-                best_question = question_gain
+                best_question = question
+
+    print(best_gain)
+    print(best_question)
     return best_gain, best_question
+
+
+best_g, best_q = get_best_split(df.values)
